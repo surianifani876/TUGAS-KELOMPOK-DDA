@@ -1,0 +1,575 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Evakuasi Aman (Backtracking) — Top 10</title>
+
+  <style>
+    :root{
+      /* ===== Tema ungu-biru kuat (biar tidak putih) ===== */
+      --text:#0b1020;
+      --muted:#243047;
+
+      --primary:#3b82f6;
+      --primary2:#6366f1;
+
+      --radius:24px;
+      --shadow: 0 22px 60px rgba(15,23,42,.18);
+      --shadow2: 0 12px 30px rgba(15,23,42,.12);
+
+      --cell: 44px;
+      --gap: 10px;
+    }
+
+    *{box-sizing:border-box;}
+    html,body{height:100%;}
+
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      color:var(--text);
+      overflow:hidden;
+
+      /* ===== Background ungu-biru (lebih “nendang”) ===== */
+      background:
+        radial-gradient(1200px 800px at 15% 20%, rgba(193,168,255,.90), transparent 60%),
+        radial-gradient(1200px 800px at 85% 20%, rgba(140,220,255,.85), transparent 60%),
+        radial-gradient(900px 700px at 60% 85%, rgba(120,140,255,.55), transparent 60%),
+        linear-gradient(135deg, #b9a7ff 0%, #8ad7ff 45%, #b7b2ff 100%);
+    }
+
+    /* ===== Full screen app ===== */
+    .app{
+      height:100vh;
+      display:grid;
+      grid-template-rows:auto 1fr;
+      gap:16px;
+      padding:22px;
+    }
+
+    /* ===== Header glass (berwarna) ===== */
+    header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      padding:14px 18px;
+      border-radius: var(--radius);
+
+      background: linear-gradient(135deg, rgba(70,60,170,.28), rgba(40,150,210,.20));
+      border:1px solid rgba(255,255,255,.30);
+      box-shadow: var(--shadow2);
+      backdrop-filter: blur(18px);
+    }
+
+    .title{
+      display:flex; flex-direction:column; gap:4px;
+      max-width: 520px;
+    }
+    .title h1{
+      margin:0;
+      font-size:18px;
+      letter-spacing:.2px;
+      color:#0b1020;
+    }
+    .title p{
+      margin:0;
+      font-size:12px;
+      color: rgba(15,23,42,.78);
+      line-height:1.25;
+    }
+
+    /* ===== Toolbar ===== */
+    .toolbar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      justify-content:flex-end;
+    }
+
+    .btn{
+      border:1px solid rgba(255,255,255,.30);
+      background: rgba(10,15,40,.08);
+      padding:10px 12px;
+      border-radius: 16px;
+      cursor:pointer;
+      font-weight:800;
+      font-size:12px;
+      color:#0b1020;
+      box-shadow: 0 10px 24px rgba(15,23,42,.10);
+      transition:.15s transform,.15s background;
+      user-select:none;
+      backdrop-filter: blur(12px);
+    }
+    .btn:hover{transform: translateY(-1px);}
+    .btn.active{
+      outline: 2px solid rgba(59,130,246,.40);
+      background: rgba(219,234,254,.35);
+    }
+    .btn.primary{
+      color:#fff;
+      border:1px solid rgba(99,102,241,.40);
+      background: linear-gradient(135deg, rgba(59,130,246,.98), rgba(99,102,241,.92));
+    }
+    .btn.ghost{
+      background: rgba(255,255,255,.14);
+      color:#0b1020;
+    }
+
+    .field{
+      display:flex; align-items:center; gap:8px;
+      padding:8px 10px;
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.30);
+      background: rgba(10,15,40,.06);
+      box-shadow: 0 10px 24px rgba(15,23,42,.10);
+      font-size:12px;
+      color: rgba(15,23,42,.75);
+      backdrop-filter: blur(12px);
+      user-select:none;
+    }
+
+    select{
+      border:1px solid rgba(255,255,255,.35);
+      background: rgba(255,255,255,.35);
+      border-radius: 12px;
+      padding:6px 10px;
+      font-weight:900;
+      color:#0b1020;
+      cursor:pointer;
+      outline:none;
+    }
+
+    /* ===== Main panels ===== */
+    main{
+      min-height:0;
+      display:grid;
+      grid-template-columns: 1.25fr .75fr;
+      gap:16px;
+    }
+
+    .panel{
+      min-height:0;
+      border-radius: var(--radius);
+
+      background: linear-gradient(135deg, rgba(70,60,170,.20), rgba(40,150,210,.14));
+      border:1px solid rgba(255,255,255,.30);
+
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+    }
+
+    .panelHead{
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255,255,255,.22);
+      background: rgba(10,15,40,.06);
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .panelHead .h{
+      font-weight:900;
+      font-size:13px;
+      color:#0b1020;
+    }
+    .panelHead .s{
+      margin-top:3px;
+      color: rgba(15,23,42,.75);
+      font-size:12px;
+      line-height:1.25;
+    }
+
+    .panelBody{
+      min-height:0;
+      padding:14px;
+      overflow:auto;
+    }
+
+    /* ===== Grid ===== */
+    .gridWrap{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    .grid{
+      display:grid;
+      gap: var(--gap);
+      justify-content:start;
+      padding:10px;
+      border-radius: 22px;
+      border: 1px dashed rgba(255,255,255,.32);
+      background: rgba(10,15,40,.08);
+    }
+
+    .cell{
+      width: var(--cell);
+      height: var(--cell);
+      border-radius: 16px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:900;
+      font-size:13px;
+      cursor:pointer;
+      user-select:none;
+
+      border: 1px solid rgba(255,255,255,.22);
+      background: rgba(255,255,255,.12);
+      transition: .08s transform;
+      color:#0b1020;
+    }
+    .cell:hover{transform: scale(1.02);}
+
+    .cell.wall{background: rgba(2,6,23,.92); color:#fff;}
+    .cell.haz{background: rgba(239,68,68,.92); color:#fff;}
+    .cell.start{background: rgba(59,130,246,.92); color:#fff;}
+    .cell.exit{background: rgba(34,197,94,.92); color:#fff;}
+    .cell.path{background: rgba(251,191,36,.92); color:#111827;}
+
+    .status{
+      padding: 12px 14px;
+      border-radius: 18px;
+      border:1px solid rgba(255,255,255,.30);
+      background: rgba(10,15,40,.06);
+      color: rgba(15,23,42,.78);
+      font-size:12px;
+      line-height:1.25;
+      backdrop-filter: blur(12px);
+    }
+
+    /* ===== Solutions ===== */
+    .solList{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    .sol{
+      border:1px solid rgba(255,255,255,.30);
+      border-radius: 18px;
+      background: rgba(10,15,40,.06);
+      padding: 10px 12px;
+      cursor:pointer;
+      box-shadow: 0 12px 26px rgba(15,23,42,.12);
+      transition: .12s transform, .12s background;
+      backdrop-filter: blur(12px);
+    }
+    .sol:hover{transform: translateY(-1px);}
+    .sol.selected{
+      outline: 2px solid rgba(59,130,246,.40);
+      background: rgba(219,234,254,.22);
+    }
+    .sol .t{font-weight:900; font-size:13px; color:#0b1020;}
+    .sol .m{color: rgba(15,23,42,.78); font-size:12px; margin-top:2px;}
+
+    .detail{
+      margin-top: 12px;
+      border-top: 1px solid rgba(255,255,255,.22);
+      padding-top: 12px;
+      color: rgba(15,23,42,.78);
+      font-size:12px;
+    }
+
+    .mono{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      color:#0b1020;
+      background: rgba(255,255,255,.14);
+      border:1px solid rgba(255,255,255,.30);
+      border-radius: 18px;
+      padding: 10px 12px;
+      margin-top: 8px;
+      backdrop-filter: blur(12px);
+    }
+
+    @media (max-width: 1100px){
+      body{overflow:auto;}
+      .app{height:auto; min-height:100vh;}
+      main{grid-template-columns:1fr;}
+    }
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <div class="title">
+      <h1>Evakuasi Aman (Backtracking) — Top 10</h1>
+      <p>Theme ungu–biru glass. Klik kotak untuk dinding/bahaya. Sistem mencari 10 jalur paling aman.</p>
+    </div>
+
+    <div class="toolbar">
+      <button class="btn active" id="mEmpty">Kosong (.)</button>
+      <button class="btn" id="mWall">Dinding (#)</button>
+      <button class="btn" id="mHaz">Bahaya (F)</button>
+      <button class="btn" id="mStart">Start (S)</button>
+      <button class="btn" id="mExit">Exit (E)</button>
+
+      <button class="btn primary" id="btnSolve">Cari 10 Solusi Aman</button>
+      <button class="btn ghost" id="btnDemo">Contoh Peta Bercabang</button>
+
+      <div class="field">
+        Radius
+        <select id="radius">
+          <option value="1">1</option>
+          <option value="2" selected>2</option>
+          <option value="3">3</option>
+        </select>
+      </div>
+
+      <div class="field">
+        Bobot Risiko
+        <select id="wRisk">
+          <option value="6">6</option>
+          <option value="8" selected>8</option>
+          <option value="10">10</option>
+          <option value="12">12</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="panel">
+      <div class="panelHead">
+        <div>
+          <div class="h">Peta Gedung</div>
+          <div class="s">S=start, E=exit, #=dinding, F=bahaya. Jalur terpilih kuning.</div>
+        </div>
+      </div>
+      <div class="panelBody">
+        <div class="gridWrap">
+          <div id="grid" class="grid"></div>
+          <div id="status" class="status">Tip: klik “Contoh Peta Bercabang”, lalu “Cari 10 Solusi Aman”.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panelHead">
+        <div>
+          <div class="h">Daftar 10 Solusi</div>
+          <div class="s">Paling aman di atas (score kecil). Klik untuk lihat detail.</div>
+        </div>
+      </div>
+
+      <div class="panelBody">
+        <div id="solList" class="solList"></div>
+
+        <div class="detail">
+          <div style="font-weight:900;color:var(--text)">Detail Jalur</div>
+          <div id="detail" class="mono">—</div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+  const rows = 10, cols = 10;
+
+  let grid = Array.from({length:rows}, ()=> Array(cols).fill("."));
+  grid[0][0] = "S";
+  grid[rows-1][cols-1] = "E";
+
+  let mode = ".";
+  let solutions = [];
+  let pathSet = new Set();
+  let selectedIndex = -1;
+
+  const elGrid = document.getElementById("grid");
+  const elStatus = document.getElementById("status");
+  const elSolList = document.getElementById("solList");
+  const elDetail = document.getElementById("detail");
+
+  function setStatus(t){ elStatus.textContent = t; }
+
+  function setMode(m){
+    mode = m;
+    document.querySelectorAll(".toolbar .btn").forEach(b=>b.classList.remove("active"));
+    if(m===".") document.getElementById("mEmpty").classList.add("active");
+    if(m==="#") document.getElementById("mWall").classList.add("active");
+    if(m==="F") document.getElementById("mHaz").classList.add("active");
+    if(m==="S") document.getElementById("mStart").classList.add("active");
+    if(m==="E") document.getElementById("mExit").classList.add("active");
+  }
+
+  document.getElementById("mEmpty").onclick=()=>setMode(".");
+  document.getElementById("mWall").onclick =()=>setMode("#");
+  document.getElementById("mHaz").onclick  =()=>setMode("F");
+  document.getElementById("mStart").onclick=()=>setMode("S");
+  document.getElementById("mExit").onclick =()=>setMode("E");
+
+  function cls(v, key){
+    if(v==="#") return "cell wall";
+    if(v==="F") return "cell haz";
+    if(v==="S") return "cell start";
+    if(v==="E") return "cell exit";
+    if(pathSet.has(key) && v===".") return "cell path";
+    return "cell";
+  }
+
+  function clearSolutions(){
+    solutions = [];
+    selectedIndex = -1;
+    pathSet = new Set();
+    elSolList.innerHTML = "";
+    elDetail.textContent = "—";
+  }
+
+  function render(){
+    elGrid.style.gridTemplateColumns = `repeat(${cols}, var(--cell))`;
+    elGrid.innerHTML = "";
+
+    for(let r=0;r<rows;r++){
+      for(let c=0;c<cols;c++){
+        const v = grid[r][c];
+        const key = r+","+c;
+
+        const d = document.createElement("div");
+        d.className = cls(v, key);
+        d.textContent = (v==="." ? "" : v);
+
+        d.onclick = ()=>{
+          clearSolutions();
+
+          if(mode==="S"){
+            for(let rr=0; rr<rows; rr++){
+              for(let cc=0; cc<cols; cc++){
+                if(grid[rr][cc]==="S") grid[rr][cc]=".";
+              }
+            }
+            if(grid[r][c]==="#" || grid[r][c]==="F"){ setStatus("S tidak boleh di dinding/bahaya."); return; }
+            grid[r][c] = "S";
+          } else if(mode==="E"){
+            for(let rr=0; rr<rows; rr++){
+              for(let cc=0; cc<cols; cc++){
+                if(grid[rr][cc]==="E") grid[rr][cc]=".";
+              }
+            }
+            if(grid[r][c]==="#" || grid[r][c]==="F"){ setStatus("E tidak boleh di dinding/bahaya."); return; }
+            grid[r][c] = "E";
+          } else {
+            if(grid[r][c]==="S" || grid[r][c]==="E"){ setStatus("Kotak S/E tidak diubah. Pakai mode Start/Exit."); return; }
+            grid[r][c] = mode; // ".", "#", "F"
+          }
+
+          setStatus("Peta diubah. Klik “Cari 10 Solusi Aman”.");
+          render();
+        };
+
+        elGrid.appendChild(d);
+      }
+    }
+  }
+
+  function renderSolutions(){
+    elSolList.innerHTML = "";
+
+    if(solutions.length === 0){
+      elSolList.innerHTML = `<div style="color:rgba(15,23,42,.78);font-size:12px">Belum ada solusi. Klik “Cari 10 Solusi Aman”.</div>`;
+      return;
+    }
+
+    solutions.forEach((s, idx)=>{
+      const div = document.createElement("div");
+      div.className = "sol" + (idx===selectedIndex ? " selected" : "");
+      div.innerHTML =
+        `<div class="t">Solusi ${idx+1}</div>` +
+        `<div class="m">steps=${s.steps}, score=${s.score.toFixed(4)}, risk_sum=${s.risk_sum.toFixed(4)}</div>`;
+
+      div.onclick = ()=>{
+        selectedIndex = idx;
+        pathSet = new Set(s.path.map(p=>p[0]+","+p[1]));
+        elDetail.textContent =
+          `Solusi ${idx+1}\nsteps=${s.steps}\nscore=${s.score}\nrisk_sum=${s.risk_sum}\n\n` +
+          s.path.map(p=>`(${p[0]},${p[1]})`).join(" -> ");
+        render();
+        renderSolutions();
+      };
+
+      elSolList.appendChild(div);
+    });
+  }
+
+  function loadDemo(){
+    const demo = [
+      "S..#....F.",
+      ".##.#.##..",
+      "...#....#.",
+      ".###.##.#.",
+      "...#..F...",
+      ".#..####..",
+      ".#........",
+      ".####.###.",
+      "....#...#.",
+      ".F..#....E"
+    ];
+    for(let r=0;r<rows;r++){
+      for(let c=0;c<cols;c++){
+        grid[r][c] = demo[r][c];
+      }
+    }
+    clearSolutions();
+    setStatus("Contoh peta bercabang dimuat. Klik “Cari 10 Solusi Aman”.");
+    render();
+    renderSolutions();
+  }
+
+  document.getElementById("btnDemo").onclick = ()=> loadDemo();
+
+  document.getElementById("btnSolve").onclick = async ()=>{
+    setStatus("Menghitung 10 solusi aman...");
+
+    try{
+      const radius = parseInt(document.getElementById("radius").value);
+      const w_risk = parseFloat(document.getElementById("wRisk").value);
+
+      const res = await fetch("/solve", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ grid:grid, radius:radius, w_risk:w_risk })
+      });
+
+      const data = await res.json();
+
+      if(!data.ok){
+        setStatus("Gagal: " + data.error);
+        clearSolutions();
+        renderSolutions();
+        render();
+        return;
+      }
+
+      solutions = data.solutions || [];
+      selectedIndex = 0;
+
+      if(solutions.length > 0){
+        pathSet = new Set(solutions[0].path.map(p=>p[0]+","+p[1]));
+        elDetail.textContent =
+          `Solusi 1\nsteps=${solutions[0].steps}\nscore=${solutions[0].score}\nrisk_sum=${solutions[0].risk_sum}\n\n` +
+          solutions[0].path.map(p=>`(${p[0]},${p[1]})`).join(" -> ");
+      }
+
+      setStatus(`Berhasil! Ditemukan ${solutions.length} solusi. Klik solusi di kanan.`);
+      renderSolutions();
+      render();
+
+    }catch(e){
+      setStatus("Error: server Python tidak jalan. Pastikan terminal masih running.");
+    }
+  };
+
+  render();
+  renderSolutions();
+</script>
+</body>
+</html>
